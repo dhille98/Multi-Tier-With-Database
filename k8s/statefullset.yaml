@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bankappdb-svc
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: bank-app-db
+  ports:
+  - port: 3306
+    targetPort: 3306
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: bankappdb
+spec:
+  selector:
+    matchLabels:
+      app: bank-app-db
+  serviceName: bankappdb-svc
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: bank-app-db
+    spec:
+      containers:
+      - name: mysql
+        image: mysql
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: Test@123
+          - name: MYSQL_DATABASE
+            value: bankappdb
+        ports:
+        - containerPort: 3306
+          name: web
+        volumeMounts:
+        - name: bankapp-pvc
+          mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+  - metadata:
+      name: bankapp-svc
+    spec:
+      accessModes: 
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Gi
